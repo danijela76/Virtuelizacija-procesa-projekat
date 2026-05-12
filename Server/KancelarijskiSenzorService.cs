@@ -1,5 +1,7 @@
 using Common;
 using System;
+using System.Configuration;
+using System.Globalization;
 using System.ServiceModel;
 
 namespace Server
@@ -10,12 +12,24 @@ namespace Server
         private bool sessionActive = false;
         private SessionMeta currentSessionMeta = null;
 
+        private int sampleCount = 0;
+        private double volumeSum = 0.0;
+        private double outOfBandPercent = 25.0;
+
         public OperationResponse StartSession(SessionMeta meta)
         {
             ValidateSessionMeta(meta);
 
             sessionActive = true;
             currentSessionMeta = meta;
+
+            sampleCount = 0;
+            volumeSum = 0.0;
+            outOfBandPercent = double.TryParse(
+                ConfigurationManager.AppSettings["OutOfBand_Percent"],
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out double pct) ? pct : 25.0;
 
             Console.WriteLine($"[SERVER] Sesija pokrenuta. {meta}");
 
@@ -30,6 +44,23 @@ namespace Server
             }
 
             ValidateSample(sample);
+
+            sampleCount++;
+            volumeSum += sample.Volume;
+            double vmean = volumeSum / sampleCount;
+
+            if (sampleCount > 1)
+            {
+                double lower = vmean * (1.0 - outOfBandPercent / 100.0);
+                double upper = vmean * (1.0 + outOfBandPercent / 100.0);
+
+                if (sample.Volume < lower)
+                    Console.WriteLine($"[SERVER] UPOZORENJE: Volume={sample.Volume:F2} je ISPOD ocekivane vrednosti " +
+                                      $"(Vmean={vmean:F2}, donja granica={lower:F2})");
+                else if (sample.Volume > upper)
+                    Console.WriteLine($"[SERVER] UPOZORENJE: Volume={sample.Volume:F2} je IZNAD ocekivane vrednosti " +
+                                      $"(Vmean={vmean:F2}, gornja granica={upper:F2})");
+            }
 
             Console.WriteLine($"[SERVER] Uzorak primljen: {sample}");
 
