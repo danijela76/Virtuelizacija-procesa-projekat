@@ -12,6 +12,8 @@ namespace Common
         private double pressure;
         private DateTime dateTime;
 
+        public SensorSample() : this(0, 0, 0, 1, DateTime.Now) { }
+
         public SensorSample(double volume, double temperatureDHT, double temperatureBMP, double pressure, DateTime dateTime)
         {
             this.volume = volume;

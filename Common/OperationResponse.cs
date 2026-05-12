@@ -9,6 +9,8 @@ namespace Common
         private string status;
         private string message;
 
+        public OperationResponse() : this(false, string.Empty, string.Empty) { }
+
         public OperationResponse(bool isAcknowledged, string status, string message)
         {
             this.isAcknowledged = isAcknowledged;

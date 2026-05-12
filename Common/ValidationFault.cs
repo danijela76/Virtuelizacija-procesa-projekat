@@ -9,6 +9,8 @@ namespace Common
         private string fieldName;
         private string expectedRange;
 
+        public ValidationFault() : this(string.Empty, string.Empty, string.Empty) { }
+
         public ValidationFault(string message, string fieldName, string expectedRange)
         {
             this.message = message;

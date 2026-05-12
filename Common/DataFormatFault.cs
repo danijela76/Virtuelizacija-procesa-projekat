@@ -8,6 +8,8 @@ namespace Common
         private string message;
         private string fieldName;
 
+        public DataFormatFault() : this(string.Empty, string.Empty) { }
+
         public DataFormatFault(string message, string fieldName)
         {
             this.message = message;
