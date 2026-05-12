@@ -102,18 +102,23 @@ namespace Client
 
         static void ExecuteSessionWithDisposeGuard(SessionMeta meta, List<SensorSample> samples)
         {
-            CsvReaderWrapper demoResource = null;
+            string sessionLogPath = $"session_{DateTime.Now:yyyyMMdd_HHmmss}.log";
+            StreamWriterWrapper sessionLog = null;
 
             try
             {
-                demoResource = new CsvReaderWrapper(ConfigurationManager.AppSettings["csvPath"]);
+                sessionLog = new StreamWriterWrapper(sessionLogPath, append: false);
+                sessionLog.WriteLine($"[SESIJA POKRENUTA] {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sessionLog.WriteLine($"Meta: {meta}");
 
                 OperationResponse startResponse = proxy.StartSession(meta);
                 Console.WriteLine($"[CLIENT] StartSession -> {startResponse}");
+                sessionLog.WriteLine($"StartSession: {startResponse}");
 
                 if (!startResponse.IsAcknowledged)
                 {
                     Console.WriteLine("[CLIENT] Servis nije prihvatio pokretanje sesije.");
+                    sessionLog.WriteLine("[SESIJA ODBIJENA] Servis nije prihvatio StartSession.");
                     return;
                 }
 
@@ -122,10 +127,12 @@ namespace Client
                 {
                     OperationResponse pushResponse = proxy.PushSample(samples[i]);
                     Console.WriteLine($"[CLIENT] PushSample [{i + 1}/{samples.Count}] -> {pushResponse}");
+                    sessionLog.WriteLine($"PushSample [{i + 1}/{samples.Count}]: {pushResponse}");
 
                     if (!pushResponse.IsAcknowledged)
                     {
                         Console.WriteLine($"[CLIENT] Servis nije prihvatio uzorak {i + 1}. Prekidam slanje.");
+                        sessionLog.WriteLine($"[PREKID] Uzorak {i + 1} odbijen.");
                         break;
                     }
                     sentCount++;
@@ -135,29 +142,33 @@ namespace Client
 
                 OperationResponse endResponse = proxy.EndSession();
                 Console.WriteLine($"[CLIENT] EndSession -> {endResponse}");
+                sessionLog.WriteLine($"EndSession: {endResponse}");
+                sessionLog.WriteLine($"[SESIJA ZAVRSENA] Poslato {sentCount}/{samples.Count} uzoraka.");
             }
             catch (FaultException<DataFormatFault> e)
             {
                 Console.WriteLine($"[CLIENT] DataFormatFault: [{e.Detail.FieldName}] {e.Detail.Message}");
+                sessionLog?.WriteLine($"[GRESKA DataFormatFault] [{e.Detail.FieldName}] {e.Detail.Message}");
                 SafeEndSession();
             }
             catch (FaultException<ValidationFault> e)
             {
                 Console.WriteLine($"[CLIENT] ValidationFault: [{e.Detail.FieldName}] {e.Detail.Message} (Ocekivano: {e.Detail.ExpectedRange})");
+                sessionLog?.WriteLine($"[GRESKA ValidationFault] [{e.Detail.FieldName}] {e.Detail.Message} (Ocekivano: {e.Detail.ExpectedRange})");
                 SafeEndSession();
             }
             catch (Exception e)
             {
                 Console.WriteLine($"[CLIENT] Neocekivana greska u toku prenosa: {e.Message}");
-                Console.WriteLine("[CLIENT] Dispose pattern garantuje oslobadjanje resursa cak i pri izuzetku.");
+                sessionLog?.WriteLine($"[GRESKA] Neocekivana greska usred prenosa: {e.Message}");
                 SafeEndSession();
             }
             finally
             {
-                if (demoResource != null)
+                if (sessionLog != null)
                 {
-                    demoResource.Dispose();
-                    Console.WriteLine("[CLIENT] [Dispose] Resursi su uspesno oslobodjeni u finally bloku.");
+                    sessionLog.Dispose();
+                    Console.WriteLine($"[CLIENT] [Dispose] Session log '{sessionLogPath}' uspesno zatvoren u finally bloku.");
                 }
             }
         }

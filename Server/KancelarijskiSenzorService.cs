@@ -67,10 +67,10 @@ namespace Server
                     new FaultReason("Nevazeci datum i vreme u meta zaglavlju."));
             }
 
-            if (meta.Pressure <= 0)
+            if (meta.Pressure <= 0 || meta.Pressure > 1100)
             {
                 throw new FaultException<ValidationFault>(
-                    new ValidationFault("Pritisak mora biti pozitivan broj.", "Pressure", "> 0"),
+                    new ValidationFault("Pritisak mora biti u opsegu 0 do 1100 hPa.", "Pressure", "0 < Pressure <= 1100"),
                     new FaultReason("Nevazeca vrednost pritiska u meta zaglavlju."));
             }
 
@@ -79,6 +79,20 @@ namespace Server
                 throw new FaultException<ValidationFault>(
                     new ValidationFault("Jacina zvuka ne moze biti negativna.", "Volume", ">= 0"),
                     new FaultReason("Nevazeca vrednost jacine zvuka u meta zaglavlju."));
+            }
+
+            if (meta.TemperatureDHT < -40 || meta.TemperatureDHT > 80)
+            {
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Temperatura DHT senzora van dozvoljenog opsega.", "TemperatureDHT", "-40 do 80 °C"),
+                    new FaultReason("Nevazeca vrednost temperature DHT u meta zaglavlju."));
+            }
+
+            if (meta.TemperatureBMP < -40 || meta.TemperatureBMP > 85)
+            {
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Temperatura BMP senzora van dozvoljenog opsega.", "TemperatureBMP", "-40 do 85 °C"),
+                    new FaultReason("Nevazeca vrednost temperature BMP u meta zaglavlju."));
             }
         }
 
@@ -98,10 +112,10 @@ namespace Server
                     new FaultReason("Nevazeci datum i vreme u uzorku."));
             }
 
-            if (sample.Pressure <= 0)
+            if (sample.Pressure <= 0 || sample.Pressure > 1100)
             {
                 throw new FaultException<ValidationFault>(
-                    new ValidationFault("Pritisak mora biti pozitivan broj.", "Pressure", "> 0"),
+                    new ValidationFault("Pritisak mora biti u opsegu 0 do 1100 hPa.", "Pressure", "0 < Pressure <= 1100"),
                     new FaultReason("Nevazeca vrednost pritiska u uzorku."));
             }
 
@@ -110,6 +124,20 @@ namespace Server
                 throw new FaultException<ValidationFault>(
                     new ValidationFault("Jacina zvuka ne moze biti negativna.", "Volume", ">= 0"),
                     new FaultReason("Nevazeca vrednost jacine zvuka u uzorku."));
+            }
+
+            if (sample.TemperatureDHT < -40 || sample.TemperatureDHT > 80)
+            {
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Temperatura DHT senzora van dozvoljenog opsega.", "TemperatureDHT", "-40 do 80 °C"),
+                    new FaultReason("Nevazeca vrednost temperature DHT u uzorku."));
+            }
+
+            if (sample.TemperatureBMP < -40 || sample.TemperatureBMP > 85)
+            {
+                throw new FaultException<ValidationFault>(
+                    new ValidationFault("Temperatura BMP senzora van dozvoljenog opsega.", "TemperatureBMP", "-40 do 85 °C"),
+                    new FaultReason("Nevazeca vrednost temperature BMP u uzorku."));
             }
         }
     }
